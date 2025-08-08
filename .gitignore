@@ -1,0 +1,10 @@
+#logs
+logs
+*.logs
+
+#Node Modules
+frontend/node_modules
+backend/node_modules
+
+#Environment Vriables
+backend/.Environment
