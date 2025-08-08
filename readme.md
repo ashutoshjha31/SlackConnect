@@ -39,10 +39,10 @@ cp .env.example .env
 #### Fill `.env` with:
 ```
 PORT=3000
-DATABASE_URL=postgres://<your_postgres_url>
+DATABASE_URL=file:./dev.db   # or your PostgreSQL URL
 SLACK_CLIENT_ID=xxxx
 SLACK_CLIENT_SECRET=xxxx
-SLACK_REDIRECT_URI=https://your-backend-url.com/api/slack/callback
+SLACK_REDIRECT_URI=https://<ngrok-public-url>/api/slack/callback
 ```
 
 ```bash
@@ -60,7 +60,7 @@ cp .env.example .env
 
 #### Fill `.env` with:
 ```
-VITE_BACKEND_URL=https://your-backend-url.com
+VITE_BACKEND_URL=https://<ngrok-public-url>
 ```
 
 ```bash
@@ -69,55 +69,75 @@ npm run dev
 
 ---
 
+## 🌐 ngrok Role in Development
+
+Slack requires an **HTTPS public URL** for OAuth callbacks — it does not accept plain `http://localhost`.  
+We used **ngrok** to expose the local backend over HTTPS for Slack to communicate with.
+
+```mermaid
+graph LR
+    A[Local Backend http://localhost:3000] -->|ngrok tunnel| B[Public HTTPS URL]
+    B --> C[Slack App OAuth Redirect URI]
+    C -->|Sends OAuth Code| A
+```
+
+### ngrok Setup Commands
+```bash
+# Start backend first
+npx ts-node src/index.ts
+
+# In a new terminal
+ngrok http 3000
+```
+
+**Steps After ngrok Starts**:
+1. Copy the HTTPS URL ngrok provides (e.g. `https://abc123.ngrok-free.app`)
+2. Update `SLACK_REDIRECT_URI` in your backend `.env` file:
+   ```
+   SLACK_REDIRECT_URI=https://abc123.ngrok-free.app/api/slack/callback
+   ```
+3. Go to **Slack App → OAuth & Permissions → Redirect URLs**
+   - Add the same ngrok URL + `/api/slack/callback`
+4. Save changes and reinstall the Slack app to your workspace.
+
+---
+
 ## 🏗️ Architecture Overview
 
 ### ✅ OAuth Flow
-- User clicks “Connect Slack Workspace” → Redirects to Slack Auth URL
+- User clicks **“Connect Slack Workspace”** → Redirects to Slack Auth URL
 - On successful login, Slack redirects to `/api/slack/callback`
-- App exchanges code for access token
-- Token is stored using Prisma (PostgreSQL)
-
-### 🔐 Token Management
-- Uses `upsert` to update or create token per Slack `team.id`
-- Stores `access_token`, `refresh_token` (if present), `teamId`
+- App exchanges code for an access token
+- Token stored in Prisma (SQLite/PostgreSQL)
+- Scheduled and immediate messages sent via Slack API
 
 ### ⏰ Scheduled Messages
-- A cron job runs periodically using `node-cron`
-- Pulls scheduled messages from DB and sends via Slack API
+- Cron job runs every minute using `node-cron`
+- Fetches scheduled messages from DB and sends them via Slack API
 
 ---
 
-## ❗ Challenges & Learnings
+## 🐞 Troubleshooting
 
-### ⚠️ Challenge: Localhost & Slack OAuth
-Slack doesn’t allow `http://localhost` for redirect URIs. Used `ngrok` for tunneling. Switched to deploying backend on Render with HTTPS.
+- **Backend shuts down automatically**:  
+  Check for unhandled promise rejections. Run backend and ngrok in separate terminals.
 
-**Learning:** Always develop OAuth apps with a public HTTPS endpoint when possible.
+- **Slack OAuth error: `invalid_redirect_uri`**:  
+  Ensure the URL in `.env` matches exactly in Slack App’s Redirect URLs.
 
----
+- **ngrok URL changes every time**:  
+  Each restart generates a new URL — update `.env` and Slack settings every time.
 
-### ⚠️ Challenge: SQLite Issues with Hosting
-SQLite is local-only and not supported by most cloud hosts.
-
-**Solution:** Migrated to PostgreSQL (hosted on Supabase).
-
----
-
-### ⚠️ Challenge: Environment Variables in CI/CD
-Managing environment variables in Vercel and Render was tricky.
-
-**Learning:** Use `.env.example` and document variables clearly for future deployments.
+- **Alternative to ngrok**:  
+  `npx localtunnel --port 3000 --subdomain myapp` (less stable for Slack OAuth)
 
 ---
 
 ## 📎 Useful Links
 - [Slack App Dashboard](https://api.slack.com/apps)
-- [Vercel](https://vercel.com)
-- [Render](https://render.com)
-- [Supabase (PostgreSQL)](https://supabase.com)
+
 
 ---
 
 ## 📬 Contact
-Made with ❤️ by [Your Name](https://github.com/your-username).
-
+Made with ❤️ by [Ashutosh jha](https://github.com/ashutoshjha31).
