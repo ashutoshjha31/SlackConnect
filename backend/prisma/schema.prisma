@@ -1,0 +1,22 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model SlackToken {
+  teamId       String  @id
+  accessToken  String
+  refreshToken String
+}
+
+model ScheduledMessage {
+  id          Int      @id @default(autoincrement())
+  teamId      String
+  channel     String
+  message     String
+  scheduledAt DateTime
+}
