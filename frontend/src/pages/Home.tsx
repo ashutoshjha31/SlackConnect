@@ -4,7 +4,7 @@ export default function Home() {
   return (
     <div>
       <a
-        href="http://localhost:3000/api/slack/connect"
+        href="slack-connect-three.vercel.app"
         className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
       >
         Connect Slack Workspace
