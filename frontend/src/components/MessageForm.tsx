@@ -44,7 +44,10 @@ export default function MessageForm() {
         onChange={e => setChannel(e.target.value)}
         className="border p-2 rounded w-full"
       />
-      <textarea
+      <br />
+      <br />
+      <div>
+        <textarea
         placeholder="Message"
         value={message}
         onChange={e => setMessage(e.target.value)}
@@ -56,6 +59,8 @@ export default function MessageForm() {
         onChange={e => setScheduledAt(e.target.value)}
         className="border p-2 rounded w-full"
       />
+      </div>
+      
       <div className="flex gap-4">
         <button
           onClick={sendNow}
